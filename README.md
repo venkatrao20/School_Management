@@ -23,6 +23,9 @@ deployed as the final consolidated application.
 The first transport endpoints are now available from the root API:
 
 - `POST /api/auth/login`
+- `GET /api/notifications`
+- `PATCH /api/notifications/events/:id/read`
+- `PATCH /api/notifications/admin/:id/read`
 - `GET /api/transport/vehicles`
 - `GET /api/transport/routes`
 - `POST /api/transport/vehicles`

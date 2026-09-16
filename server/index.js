@@ -6,6 +6,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { pool } from './db.js';
 import authRoutes from './auth.js';
+import notificationRoutes from './notifications.routes.js';
 import transportRoutes from './transport.routes.js';
 
 const app = express();
@@ -30,6 +31,7 @@ app.get('/api', (_request, response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/transport', transportRoutes);
 
 app.use(express.static(path.join(rootDirectory, '../dist')));
