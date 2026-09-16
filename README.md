@@ -29,6 +29,11 @@ JWT_ACCESS_SECRET=<long-random-secret>
 
 Alternatively set `DATABASE_URL` or `MYSQL_URL` to the MySQL connection URL.
 
+The API service must have a Railway MySQL service linked to it. Creating a
+database service separately is not enough: open the API service Variables tab
+and add the `${{MySQL.*}}` references above, replacing `MySQL` with the exact
+name of your Railway database service. Then redeploy the API service.
+
 The remaining legacy folders are kept during migration so their features and
 data can be moved module by module without deleting working code. They are not
 yet part of the root API, and their SQLite/Flask/CRA runtimes must not be
