@@ -1,5 +1,13 @@
 # Student Transport Management System
 
+## Migration status
+
+The current transport application remains Flask + SQLite for local compatibility.
+The MySQL contract is available in `schema.mysql.sql`; its `transport_` table
+names avoid collisions with shared users, students, and fee tables. The Flask
+routes still need to be ported to Node/Express before this schema becomes the
+runtime database.
+
 A Flask + SQLite web application for managing student transport records,
 school movement logs, and parent notifications.
 
