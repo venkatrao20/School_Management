@@ -12,6 +12,9 @@ copy .env.example .env
 npm run dev
 ```
 
+To initialize the migrated MySQL-owned tables manually, run `npm run db:migrate`.
+Railway runs this command automatically before starting the production API.
+
 The remaining legacy folders are kept during migration so their features and
 data can be moved module by module without deleting working code. They are not
 yet part of the root API, and their SQLite/Flask/CRA runtimes must not be
