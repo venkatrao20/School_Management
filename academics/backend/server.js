@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const db = require('./db/init');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -25,9 +26,15 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
+function startServer() {
     console.log('==================================================');
     console.log(' School Management App - Academics Module');
     console.log(' Server running at: http://localhost:' + PORT);
     console.log('==================================================');
+    app.listen(PORT);
+}
+
+db.ready.then(startServer).catch((error) => {
+    console.error('Unable to initialize the academics database:', error);
+    process.exitCode = 1;
 });

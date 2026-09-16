@@ -5,13 +5,15 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check db/init.js && node --check routes/academics.js && node --check routes/attendance.js && node --check routes/exams.js"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.19.2",
+    "mysql2": "^3.14.3",
     "uuid": "^9.0.1"
   }
 }

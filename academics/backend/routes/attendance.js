@@ -9,7 +9,7 @@ const fail = (res, code, msg) => res.status(code).json({ success: false, error: 
 /* =========================================================
    DAILY STUDENT ATTENDANCE (Present/Absent/Late/Half-Day)
 ========================================================= */
-router.get('/student', (req, res) => {
+router.get('/student', async (req, res) => {
     const { class_id, date, student_id } = req.query;
     let query = `SELECT sa.*, st.name as student_name, st.roll_no, c.name as class_name, c.section
                  FROM student_attendance sa
@@ -20,11 +20,11 @@ router.get('/student', (req, res) => {
     if (date) { query += ' AND sa.attendance_date = ?'; params.push(date); }
     if (student_id) { query += ' AND sa.student_id = ?'; params.push(student_id); }
     query += ' ORDER BY sa.attendance_date DESC, st.roll_no';
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
 // Mark attendance (single or bulk array)
-router.post('/student', (req, res) => {
+router.post('/student', async (req, res) => {
     const records = Array.isArray(req.body) ? req.body : [req.body];
     const insertOrUpdate = db.prepare(`
         INSERT INTO student_attendance (student_id, class_id, attendance_date, status, marked_by, remarks)
@@ -32,10 +32,10 @@ router.post('/student', (req, res) => {
         ON CONFLICT(student_id, attendance_date) DO UPDATE SET
             status = excluded.status, remarks = excluded.remarks, marked_by = excluded.marked_by
     `);
-    const txn = db.transaction((rows) => {
-        for (const r of rows) {
+    try {
+        for (const r of records) {
             if (!r.student_id || !r.class_id || !r.status) throw new Error('student_id, class_id, status required for each record');
-            insertOrUpdate.run({
+            await insertOrUpdate.run({
                 student_id: r.student_id,
                 class_id: r.class_id,
                 attendance_date: r.attendance_date || new Date().toISOString().slice(0, 10),
@@ -44,27 +44,24 @@ router.post('/student', (req, res) => {
                 remarks: r.remarks || null
             });
         }
-    });
-    try {
-        txn(records);
         created(res, { marked: records.length });
     } catch (e) { fail(res, 400, e.message); }
 });
 
 /* ---------- ATTENDANCE CORRECTION ---------- */
-router.put('/student/:id/correct', (req, res) => {
+router.put('/student/:id/correct', async (req, res) => {
     const { status, remarks, corrected_by } = req.body;
-    const existing = db.prepare('SELECT * FROM student_attendance WHERE id = ?').get(req.params.id);
+    const existing = await db.prepare('SELECT * FROM student_attendance WHERE id = ?').get(req.params.id);
     if (!existing) return fail(res, 404, 'Attendance record not found');
     if (!status) return fail(res, 400, 'status is required');
-    db.prepare(`UPDATE student_attendance SET status = ?, remarks = COALESCE(?, remarks),
+    await db.prepare(`UPDATE student_attendance SET status = ?, remarks = COALESCE(?, remarks),
         is_corrected = 1, corrected_at = datetime('now'), corrected_by = ? WHERE id = ?`)
         .run(status, remarks || null, corrected_by || null, req.params.id);
-    ok(res, db.prepare('SELECT * FROM student_attendance WHERE id = ?').get(req.params.id));
+    ok(res, await db.prepare('SELECT * FROM student_attendance WHERE id = ?').get(req.params.id));
 });
 
 /* ---------- ATTENDANCE REPORTS ---------- */
-router.get('/reports/class-summary', (req, res) => {
+router.get('/reports/class-summary', async (req, res) => {
     const { class_id, from, to } = req.query;
     if (!class_id) return fail(res, 400, 'class_id required');
     let query = `SELECT st.id as student_id, st.name as student_name, st.roll_no,
@@ -81,13 +78,13 @@ router.get('/reports/class-summary', (req, res) => {
     if (from) { where += ' AND (sa.attendance_date IS NULL OR sa.attendance_date >= ?)'; params.push(from); }
     if (to) { where += ' AND (sa.attendance_date IS NULL OR sa.attendance_date <= ?)'; params.push(to); }
     query += where + ' GROUP BY st.id ORDER BY st.roll_no';
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
-router.get('/reports/daily-overview', (req, res) => {
+router.get('/reports/daily-overview', async (req, res) => {
     const { date } = req.query;
     const d = date || new Date().toISOString().slice(0, 10);
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT c.id as class_id, c.name as class_name, c.section,
             SUM(CASE WHEN sa.status='Present' THEN 1 ELSE 0 END) as present,
             SUM(CASE WHEN sa.status='Absent' THEN 1 ELSE 0 END) as absent,
@@ -104,7 +101,7 @@ router.get('/reports/daily-overview', (req, res) => {
 /* =========================================================
    TEACHER / STAFF ATTENDANCE
 ========================================================= */
-router.get('/staff', (req, res) => {
+router.get('/staff', async (req, res) => {
     const { date, teacher_id } = req.query;
     let query = `SELECT sa.*, t.name as teacher_name, t.employee_id, t.designation
                  FROM staff_attendance sa JOIN teachers t ON t.id = sa.teacher_id WHERE 1=1`;
@@ -112,10 +109,10 @@ router.get('/staff', (req, res) => {
     if (date) { query += ' AND sa.attendance_date = ?'; params.push(date); }
     if (teacher_id) { query += ' AND sa.teacher_id = ?'; params.push(teacher_id); }
     query += ' ORDER BY sa.attendance_date DESC';
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
-router.post('/staff', (req, res) => {
+router.post('/staff', async (req, res) => {
     const records = Array.isArray(req.body) ? req.body : [req.body];
     const insertOrUpdate = db.prepare(`
         INSERT INTO staff_attendance (teacher_id, attendance_date, status, check_in, check_out, remarks)
@@ -123,10 +120,10 @@ router.post('/staff', (req, res) => {
         ON CONFLICT(teacher_id, attendance_date) DO UPDATE SET
             status=excluded.status, check_in=excluded.check_in, check_out=excluded.check_out, remarks=excluded.remarks
     `);
-    const txn = db.transaction((rows) => {
-        for (const r of rows) {
+    try {
+        for (const r of records) {
             if (!r.teacher_id || !r.status) throw new Error('teacher_id and status required');
-            insertOrUpdate.run({
+            await insertOrUpdate.run({
                 teacher_id: r.teacher_id,
                 attendance_date: r.attendance_date || new Date().toISOString().slice(0, 10),
                 status: r.status,
@@ -135,9 +132,6 @@ router.post('/staff', (req, res) => {
                 remarks: r.remarks || null
             });
         }
-    });
-    try {
-        txn(records);
         created(res, { marked: records.length });
     } catch (e) { fail(res, 400, e.message); }
 });
@@ -145,7 +139,7 @@ router.post('/staff', (req, res) => {
 /* =========================================================
    LEAVE MANAGEMENT
 ========================================================= */
-router.get('/leave', (req, res) => {
+router.get('/leave', async (req, res) => {
     const { status, teacher_id } = req.query;
     let query = `SELECT lr.*, t.name as teacher_name, st.name as student_name
                  FROM leave_requests lr
@@ -155,24 +149,24 @@ router.get('/leave', (req, res) => {
     if (status) { query += ' AND lr.status = ?'; params.push(status); }
     if (teacher_id) { query += ' AND lr.teacher_id = ?'; params.push(teacher_id); }
     query += ' ORDER BY lr.applied_on DESC';
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
-router.post('/leave', (req, res) => {
+router.post('/leave', async (req, res) => {
     const { applicant_type, teacher_id, student_id, leave_type, start_date, end_date, reason } = req.body;
     if (!applicant_type || !start_date || !end_date) return fail(res, 400, 'applicant_type, start_date, end_date required');
-    const info = db.prepare(`INSERT INTO leave_requests (applicant_type, teacher_id, student_id, leave_type, start_date, end_date, reason, status)
+    const info = await db.prepare(`INSERT INTO leave_requests (applicant_type, teacher_id, student_id, leave_type, start_date, end_date, reason, status)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')`).run(applicant_type, teacher_id || null, student_id || null, leave_type || null, start_date, end_date, reason || null);
-    created(res, db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(info.lastInsertRowid));
+    created(res, await db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(info.lastInsertRowid));
 });
 
-router.put('/leave/:id/status', (req, res) => {
+router.put('/leave/:id/status', async (req, res) => {
     const { status, approved_by } = req.body;
     if (!['Approved', 'Rejected', 'Pending'].includes(status)) return fail(res, 400, 'Invalid status');
-    const existing = db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(req.params.id);
+    const existing = await db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(req.params.id);
     if (!existing) return fail(res, 404, 'Leave request not found');
-    db.prepare('UPDATE leave_requests SET status = ?, approved_by = ? WHERE id = ?').run(status, approved_by || null, req.params.id);
-    ok(res, db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(req.params.id));
+    await db.prepare('UPDATE leave_requests SET status = ?, approved_by = ? WHERE id = ?').run(status, approved_by || null, req.params.id);
+    ok(res, await db.prepare('SELECT * FROM leave_requests WHERE id = ?').get(req.params.id));
 });
 
 module.exports = router;

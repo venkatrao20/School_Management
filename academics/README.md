@@ -6,7 +6,7 @@ A complete, ready-to-run module covering:
 - **Attendance** — Daily Student Attendance (Present/Absent/Late/Half-Day), Attendance Correction, Attendance Reports, Teacher/Staff Attendance, Leave Management
 - **Examination & Results** — Exam Types & Schedule, Marks Entry, Grade/Result Summary, Rank & Performance, Merit List, Report Card Generation
 
-Built as a self-contained full-stack app: **Node.js + Express + SQLite** backend, and a **React (no build step needed)** frontend. Comes pre-loaded with sample demo data so you can explore it immediately.
+Built as a self-contained full-stack app: **Node.js + Express + MySQL** backend, and a **React (no build step needed)** frontend. Comes pre-loaded with sample demo data so you can explore it immediately.
 
 ---
 
@@ -15,7 +15,7 @@ Built as a self-contained full-stack app: **Node.js + Express + SQLite** backend
 - **Node.js 18+** installed on your computer (download free from https://nodejs.org — the LTS version).
   - Check if you already have it: open a terminal/command prompt and run `node -v`
 
-That's the only requirement. No separate database server needed — it uses a local SQLite file.
+Copy `backend/.env.example` to `backend/.env`, create the configured MySQL database, and start MySQL before running the backend.
 
 ---
 
@@ -71,7 +71,7 @@ Then visit **http://localhost:4000**
 | **Attendance** | Daily Student Attendance · Attendance Correction · Attendance Reports · Teacher/Staff Attendance · Leave Management |
 | **Examination & Results** | Exam Types & Schedule · Marks Entry · Grade/Result Summary · Rank & Performance · Merit List · Report Card Generation |
 
-Every screen is fully functional — add, view, edit, and delete real data through the UI; it's stored permanently in the local SQLite database file (`backend/db/school.db`).
+Every screen is fully functional — add, view, edit, and delete real data through the configured MySQL database. Academic tables use the `academic_` prefix so they do not collide with shared application tables.
 
 ---
 
@@ -87,7 +87,6 @@ school-app/
 │   ├── db/
 │   │   ├── schema.sql       ← full database schema
 │   │   ├── init.js          ← DB init + demo data seeding
-│   │   └── school.db        ← created automatically on first run
 │   └── routes/
 │       ├── academics.js     ← Teachers & Academics APIs
 │       ├── attendance.js    ← Attendance APIs
@@ -100,12 +99,7 @@ school-app/
 
 ## 6. Resetting the Data
 
-To wipe all data and start fresh with demo data again, delete these files and restart:
-```
-backend/db/school.db
-backend/db/school.db-wal
-backend/db/school.db-shm
-```
+To wipe all academic data and start fresh with demo data again, drop the `academic_` tables from the configured MySQL database and restart. Schema creation and seeding are idempotent.
 
 ---
 

@@ -6,8 +6,8 @@ const ok = (res, data) => res.json({ success: true, data });
 const created = (res, data) => res.status(201).json({ success: true, data });
 const fail = (res, code, msg) => res.status(code).json({ success: false, error: msg });
 
-function gradeFor(percent) {
-    const scale = db.prepare('SELECT * FROM grade_scale ORDER BY min_percent DESC').all();
+async function gradeFor(percent) {
+    const scale = await db.prepare('SELECT * FROM grade_scale ORDER BY min_percent DESC').all();
     for (const g of scale) {
         if (percent >= g.min_percent) return g.grade;
     }
@@ -17,7 +17,7 @@ function gradeFor(percent) {
 /* =========================================================
    EXAM TYPES & SCHEDULE
 ========================================================= */
-router.get('/exams', (req, res) => {
+router.get('/exams', async (req, res) => {
     const { class_id, subject_id } = req.query;
     let query = `SELECT e.*, c.name as class_name, c.section, s.name as subject_name
                  FROM exams e JOIN classes c ON c.id = e.class_id JOIN subjects s ON s.id = e.subject_id WHERE 1=1`;
@@ -25,49 +25,49 @@ router.get('/exams', (req, res) => {
     if (class_id) { query += ' AND e.class_id = ?'; params.push(class_id); }
     if (subject_id) { query += ' AND e.subject_id = ?'; params.push(subject_id); }
     query += ' ORDER BY e.exam_date';
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
-router.post('/exams', (req, res) => {
+router.post('/exams', async (req, res) => {
     const { name, exam_type, class_id, subject_id, exam_date, start_time, end_time, max_marks, pass_marks, academic_year } = req.body;
     if (!name || !class_id || !subject_id || !exam_date) return fail(res, 400, 'name, class_id, subject_id, exam_date required');
-    const info = db.prepare(`INSERT INTO exams (name, exam_type, class_id, subject_id, exam_date, start_time, end_time, max_marks, pass_marks, academic_year)
+    const info = await db.prepare(`INSERT INTO exams (name, exam_type, class_id, subject_id, exam_date, start_time, end_time, max_marks, pass_marks, academic_year)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         name, exam_type || null, class_id, subject_id, exam_date, start_time || null, end_time || null,
         max_marks || 100, pass_marks || 33, academic_year || '2026-2027'
     );
-    created(res, db.prepare('SELECT * FROM exams WHERE id = ?').get(info.lastInsertRowid));
+    created(res, await db.prepare('SELECT * FROM exams WHERE id = ?').get(info.lastInsertRowid));
 });
 
-router.put('/exams/:id', (req, res) => {
-    const existing = db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id);
+router.put('/exams/:id', async (req, res) => {
+    const existing = await db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id);
     if (!existing) return fail(res, 404, 'Exam not found');
     const merged = { ...existing, ...req.body };
-    db.prepare(`UPDATE exams SET name=@name, exam_type=@exam_type, exam_date=@exam_date, start_time=@start_time,
+    await db.prepare(`UPDATE exams SET name=@name, exam_type=@exam_type, exam_date=@exam_date, start_time=@start_time,
         end_time=@end_time, max_marks=@max_marks, pass_marks=@pass_marks WHERE id=@id`).run(merged);
-    ok(res, db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id));
+    ok(res, await db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.id));
 });
 
-router.delete('/exams/:id', (req, res) => {
-    db.prepare('DELETE FROM exams WHERE id = ?').run(req.params.id);
+router.delete('/exams/:id', async (req, res) => {
+    await db.prepare('DELETE FROM exams WHERE id = ?').run(req.params.id);
     ok(res, { deleted: true });
 });
 
 /* =========================================================
    MARKS ENTRY
 ========================================================= */
-router.get('/marks', (req, res) => {
+router.get('/marks', async (req, res) => {
     const { exam_id, student_id } = req.query;
     let query = `SELECT m.*, e.name as exam_name, e.max_marks, st.name as student_name, st.roll_no
                  FROM marks m JOIN exams e ON e.id = m.exam_id JOIN students st ON st.id = m.student_id WHERE 1=1`;
     const params = [];
     if (exam_id) { query += ' AND m.exam_id = ?'; params.push(exam_id); }
     if (student_id) { query += ' AND m.student_id = ?'; params.push(student_id); }
-    ok(res, db.prepare(query).all(...params));
+    ok(res, await db.prepare(query).all(...params));
 });
 
 // Bulk marks entry for an exam
-router.post('/marks', (req, res) => {
+router.post('/marks', async (req, res) => {
     const records = Array.isArray(req.body) ? req.body : [req.body];
     const upsert = db.prepare(`
         INSERT INTO marks (exam_id, student_id, marks_obtained, grade, remarks, entered_by)
@@ -75,20 +75,17 @@ router.post('/marks', (req, res) => {
         ON CONFLICT(exam_id, student_id) DO UPDATE SET
             marks_obtained=excluded.marks_obtained, grade=excluded.grade, remarks=excluded.remarks, entered_by=excluded.entered_by
     `);
-    const txn = db.transaction((rows) => {
-        for (const r of rows) {
+    try {
+        for (const r of records) {
             if (!r.exam_id || !r.student_id || r.marks_obtained === undefined) throw new Error('exam_id, student_id, marks_obtained required');
-            const exam = db.prepare('SELECT max_marks FROM exams WHERE id = ?').get(r.exam_id);
+            const exam = await db.prepare('SELECT max_marks FROM exams WHERE id = ?').get(r.exam_id);
             const percent = exam ? (r.marks_obtained / exam.max_marks) * 100 : r.marks_obtained;
-            const grade = r.grade || gradeFor(percent);
-            upsert.run({
+            const grade = r.grade || await gradeFor(percent);
+            await upsert.run({
                 exam_id: r.exam_id, student_id: r.student_id, marks_obtained: r.marks_obtained,
                 grade, remarks: r.remarks || null, entered_by: r.entered_by || null
             });
         }
-    });
-    try {
-        txn(records);
         created(res, { entered: records.length });
     } catch (e) { fail(res, 400, e.message); }
 });
@@ -96,10 +93,10 @@ router.post('/marks', (req, res) => {
 /* =========================================================
    GRADE / RESULT SUMMARY
 ========================================================= */
-router.get('/results/student/:studentId', (req, res) => {
-    const student = db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.studentId);
+router.get('/results/student/:studentId', async (req, res) => {
+    const student = await db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.studentId);
     if (!student) return fail(res, 404, 'Student not found');
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT m.marks_obtained, m.grade, e.name as exam_name, e.exam_type, e.max_marks, e.pass_marks, s.name as subject_name
         FROM marks m JOIN exams e ON e.id = m.exam_id JOIN subjects s ON s.id = e.subject_id
         WHERE m.student_id = ? ORDER BY e.exam_date
@@ -115,16 +112,16 @@ router.get('/results/student/:studentId', (req, res) => {
         summary: {
             totalObtained, totalMax,
             overallPercent: Math.round(overallPercent * 100) / 100,
-            overallGrade: gradeFor(overallPercent),
+            overallGrade: await gradeFor(overallPercent),
             result: overallPercent >= 33 ? 'Pass' : 'Fail'
         }
     });
 });
 
-router.get('/results/class-summary/:examId', (req, res) => {
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.examId);
+router.get('/results/class-summary/:examId', async (req, res) => {
+    const exam = await db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.examId);
     if (!exam) return fail(res, 404, 'Exam not found');
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT st.id as student_id, st.name as student_name, st.roll_no, m.marks_obtained, m.grade
         FROM students st
         LEFT JOIN marks m ON m.student_id = st.id AND m.exam_id = ?
@@ -137,10 +134,10 @@ router.get('/results/class-summary/:examId', (req, res) => {
 /* =========================================================
    RANK & PERFORMANCE
 ========================================================= */
-router.get('/rank/:examId', (req, res) => {
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.examId);
+router.get('/rank/:examId', async (req, res) => {
+    const exam = await db.prepare('SELECT * FROM exams WHERE id = ?').get(req.params.examId);
     if (!exam) return fail(res, 404, 'Exam not found');
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT st.id as student_id, st.name as student_name, st.roll_no, m.marks_obtained, m.grade
         FROM marks m JOIN students st ON st.id = m.student_id
         WHERE m.exam_id = ? ORDER BY m.marks_obtained DESC
@@ -156,9 +153,9 @@ router.get('/rank/:examId', (req, res) => {
 });
 
 // Overall class performance (average marks, top performers) across all exams for a class
-router.get('/performance/class/:classId', (req, res) => {
+router.get('/performance/class/:classId', async (req, res) => {
     const classId = req.params.classId;
-    const perStudent = db.prepare(`
+    const perStudent = await db.prepare(`
         SELECT st.id as student_id, st.name as student_name, st.roll_no,
             AVG(m.marks_obtained * 100.0 / e.max_marks) as avg_percent,
             COUNT(m.id) as exams_taken
@@ -170,7 +167,7 @@ router.get('/performance/class/:classId', (req, res) => {
         ORDER BY avg_percent DESC
     `).all(classId);
 
-    const perSubject = db.prepare(`
+    const perSubject = await db.prepare(`
         SELECT s.name as subject_name, AVG(m.marks_obtained * 100.0 / e.max_marks) as avg_percent
         FROM marks m JOIN exams e ON e.id = m.exam_id JOIN subjects s ON s.id = e.subject_id
         WHERE e.class_id = ?
@@ -183,10 +180,10 @@ router.get('/performance/class/:classId', (req, res) => {
 /* =========================================================
    MERIT LIST
 ========================================================= */
-router.get('/merit-list/:classId', (req, res) => {
+router.get('/merit-list/:classId', async (req, res) => {
     const { academic_year } = req.query;
     const classId = req.params.classId;
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT st.id as student_id, st.name as student_name, st.roll_no,
             SUM(m.marks_obtained) as total_obtained,
             SUM(e.max_marks) as total_max
@@ -209,12 +206,12 @@ router.get('/merit-list/:classId', (req, res) => {
 /* =========================================================
    REPORT CARD GENERATION
 ========================================================= */
-router.get('/report-card/:studentId', (req, res) => {
-    const student = db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.studentId);
+router.get('/report-card/:studentId', async (req, res) => {
+    const student = await db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.studentId);
     if (!student) return fail(res, 404, 'Student not found');
-    const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(student.class_id);
+    const cls = await db.prepare('SELECT * FROM classes WHERE id = ?').get(student.class_id);
 
-    const subjectMarks = db.prepare(`
+    const subjectMarks = await db.prepare(`
         SELECT s.name as subject_name, e.name as exam_name, e.exam_type, m.marks_obtained, e.max_marks, m.grade
         FROM marks m JOIN exams e ON e.id = m.exam_id JOIN subjects s ON s.id = e.subject_id
         WHERE m.student_id = ? ORDER BY s.name, e.exam_date
@@ -231,7 +228,7 @@ router.get('/report-card/:studentId', (req, res) => {
     const totalMax = subjectMarks.reduce((s, r) => s + r.max_marks, 0);
     const overallPercent = totalMax > 0 ? (totalObtained / totalMax) * 100 : 0;
 
-    const attendance = db.prepare(`
+    const attendance = await db.prepare(`
         SELECT status, COUNT(*) as count FROM student_attendance WHERE student_id = ? GROUP BY status
     `).all(req.params.studentId);
 
@@ -242,7 +239,7 @@ router.get('/report-card/:studentId', (req, res) => {
         overall: {
             totalObtained, totalMax,
             percent: Math.round(overallPercent * 100) / 100,
-            grade: gradeFor(overallPercent),
+            grade: await gradeFor(overallPercent),
             result: overallPercent >= 33 ? 'Pass' : 'Fail'
         },
         attendance,
@@ -251,8 +248,8 @@ router.get('/report-card/:studentId', (req, res) => {
 });
 
 /* GRADE SCALE reference */
-router.get('/grade-scale', (req, res) => {
-    ok(res, db.prepare('SELECT * FROM grade_scale ORDER BY min_percent DESC').all());
+router.get('/grade-scale', async (req, res) => {
+    ok(res, await db.prepare('SELECT * FROM grade_scale ORDER BY min_percent DESC').all());
 });
 
 module.exports = router;
