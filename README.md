@@ -21,6 +21,8 @@ The first transport endpoints are now available from the root API:
 
 - `GET /api/transport/vehicles`
 - `GET /api/transport/routes`
+- `POST /api/transport/vehicles`
+- `POST /api/transport/routes`
 
 They require the tables in `school_transport/schema.mysql.sql` to be loaded
 into the shared MySQL database.
