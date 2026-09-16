@@ -27,6 +27,9 @@ The first transport endpoints are now available from the root API:
 - `GET /api/transport/routes`
 - `POST /api/transport/vehicles`
 - `POST /api/transport/routes`
+- `PATCH/DELETE /api/transport/vehicles/:id`
+- `PATCH/DELETE /api/transport/routes/:id`
+- `POST /api/transport/movements`
 
 Transport write endpoints require the bearer token returned by
 `/api/auth/login`. They require the tables in
