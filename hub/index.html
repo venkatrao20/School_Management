@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Combined School Management System</title>
+  <style>
+    :root { --ink:#17213b; --muted:#71809c; --line:#e5eaf4; --blue:#4e43c8; --green:#14b883; --bg:#f7f9fd; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--bg); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header { display:flex; align-items:center; gap:22px; padding:10px 24px; background:#fff; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; min-width:210px; }
+    .brand-logo { display:block; width:185px; height:205px; object-fit:contain; object-position:center; }
+    .subtitle { margin-top:5px; color:var(--muted); font-size:13px; }
+    nav { display:flex; gap:6px; flex:1; padding:6px; background:#f4f6fb; border-radius:14px; overflow:auto; }
+    nav a { color:#68758e; text-decoration:none; white-space:nowrap; padding:12px 16px; border-radius:10px; font-size:14px; font-weight:650; }
+    nav a.active, nav a:hover { color:#5145c7; background:#fff; box-shadow:0 2px 7px #27345512; }
+    .status { white-space:nowrap; color:#159a70; background:#effcf7; border:1px solid #c8f1df; border-radius:24px; padding:11px 16px; font-size:13px; font-weight:700; }
+    main { max-width:1500px; margin:38px auto; padding:0 24px 48px; }
+    .hero { display:flex; justify-content:space-between; align-items:center; gap:28px; padding:48px 40px; border-radius:16px; color:#fff; background:linear-gradient(115deg,#28235f,#4d3fd0); box-shadow:0 14px 26px #3130802b; }
+    .hero h2 { margin:0 0 12px; font-size:36px; letter-spacing:-1.2px; }
+    .hero p { max-width:700px; margin:0; color:#dddfff; font-size:17px; line-height:1.55; }
+    .metrics { display:flex; gap:14px; }
+    .metric { min-width:130px; padding:20px 24px; text-align:center; border:1px solid #ffffff2e; border-radius:12px; background:#ffffff16; }
+    .metric strong { display:block; font-size:29px; }
+    .metric span { color:#c4c5ef; font-size:12px; }
+    h3 { margin:40px 0 20px; font-size:26px; }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .card { display:flex; flex-direction:column; min-height:270px; padding:24px; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 5px 15px #24365d0b; transition:transform .2s, box-shadow .2s; }
+    .card:hover { transform:translateY(-4px); box-shadow:0 14px 28px #24365d1b; }
+    .card-top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .icon { display:grid; place-items:center; width:46px; height:46px; border-radius:12px; font-size:24px; background:#edf0ff; }
+    .online { color:#159a70; background:#effcf7; border-radius:20px; padding:6px 9px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .online::before { content:"•"; margin-right:4px; }
+    .card h4 { margin:22px 0 8px; font-size:20px; }
+    .card p { margin:0; color:var(--muted); font-size:14px; line-height:1.5; }
+    .open { display:block; margin-top:auto; padding-top:18px; color:#5145c7; text-decoration:none; font-size:14px; font-weight:750; }
+    .open:hover { text-decoration:underline; }
+    .access { margin-top:42px; }
+    .section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .section-heading h3 { margin:0; }
+    .section-heading span { color:var(--muted); font-size:13px; }
+    .login-columns { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+    .login-column { overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 5px 15px #24365d0b; }
+    .login-column h4 { margin:0; padding:17px 18px; color:#fff; background:#4e43c8; font-size:17px; }
+    .login-column:nth-child(2) h4 { background:#148b78; }
+    .login-column:nth-child(3) h4 { background:#c36b29; }
+    .login-column:nth-child(4) h4 { background:#326bb0; }
+    .login-column:nth-child(5) h4 { background:#ad4d73; }
+    .login-column:nth-child(6) h4 { background:#5361a9; }
+    .credential { padding:16px 18px; border-bottom:1px solid var(--line); }
+    .credential:last-child { border-bottom:0; }
+    .credential-label { display:block; margin-bottom:5px; color:#7b879d; font-size:11px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; }
+    .credential-value { display:block; overflow-wrap:anywhere; color:#263454; font-family:ui-monospace, SFMono-Regular, Consolas, monospace; font-size:13px; }
+    .login-column a { display:block; margin:0 18px 16px; color:#5145c7; font-size:13px; font-weight:700; text-decoration:none; }
+    .login-column a:hover { text-decoration:underline; }
+    .security-note { margin:13px 2px 0; color:var(--muted); font-size:12px; }
+    @media (max-width:1100px) { .grid, .login-columns { grid-template-columns:repeat(2,1fr); } .brand { min-width:auto; } .brand-logo { width:150px; height:170px; } .status { display:none; } }
+    @media (max-width:720px) { header { flex-wrap:wrap; } .brand { width:100%; justify-content:center; } .brand-logo { width:190px; height:210px; } nav { order:3; flex-basis:100%; } main { margin:22px auto; padding:0 14px 30px; } .hero { display:block; padding:30px 24px; } .hero h2 { font-size:29px; } .metrics { margin-top:24px; } .metric { min-width:0; flex:1; padding:14px 8px; } .grid, .login-columns { grid-template-columns:1fr; } .section-heading { display:block; } .section-heading span { display:block; margin-top:5px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><img class="brand-logo" src="edunovae-logo.svg" alt="EduNovae, powered by RSR Technologies"></div>
+    <nav>
+      <a class="active" href="/">🏠 Hub Overview</a>
+      <a href="http://localhost:5174">🎓 Admin Portal</a>
+      <a href="http://localhost:5002">🚌 Transport</a>
+      <a href="http://localhost:3001">📄 Admissions</a>
+      <a href="http://localhost:4000">📚 Academics</a>
+      <a href="http://localhost:5001">🔔 Notifications</a>
+      <a href="http://localhost:5173">💳 Fee Finance</a>
+    </nav>
+    <div class="status">● All 6 Services Active</div>
+  </header>
+  <main>
+    <section class="hero"><div><h2>Unified School Management Hub</h2><p>Open any school management module from one place. Each service runs independently on its own localhost port.</p></div><div class="metrics"><div class="metric"><strong>6/6</strong><span>SERVICES LIVE</span></div><div class="metric"><strong>100%</strong><span>PORT HARMONY</span></div></div></section>
+    <h3>📦 Microservices &amp; Applications</h3>
+    <section class="grid">
+      <article class="card"><div class="card-top"><div class="icon">🎓</div><span class="online">Online · 5174</span></div><h4>Admin Portal</h4><p>School information, classes, sections, students, staff, timetable, marks and CSV uploads.</p><a class="open" href="http://localhost:5174">Open Admin Portal →</a></article>
+      <article class="card"><div class="card-top"><div class="icon">🚌</div><span class="online">Online · 5002</span></div><h4>School Transport</h4><p>Bus routes, vehicles, driver management, assignments and live boarding tracking.</p><a class="open" href="http://localhost:5002">Open Transport →</a></article>
+      <article class="card"><div class="card-top"><div class="icon">📄</div><span class="online">Online · 3001</span></div><h4>Admissions</h4><p>Student enquiries, applications, assessments, approvals and admission metrics.</p><a class="open" href="http://localhost:3001">Open Admissions →</a></article>
+      <article class="card"><div class="card-top"><div class="icon">📚</div><span class="online">Online · 4000</span></div><h4>Academics</h4><p>Teacher assignments, attendance, homework, exams and student report cards.</p><a class="open" href="http://localhost:4000">Open Academics →</a></article>
+      <article class="card"><div class="card-top"><div class="icon">🔔</div><span class="online">Online · 5001</span></div><h4>Notifications</h4><p>Fees, events, attendance alerts, reports and role-based school notifications.</p><a class="open" href="http://localhost:5001">Open Notifications →</a></article>
+      <article class="card"><div class="card-top"><div class="icon">💳</div><span class="online">Online · 5173</span></div><h4>Fee Finance</h4><p>Fee structures, payment plans, discounts, student assignments and finance summaries.</p><a class="open" href="http://localhost:5173">Open Fee Finance →</a></article>
+    </section>
+    <section class="access">
+      <div class="section-heading"><h3>🔐 Demo Login Access</h3><span>Local development accounts</span></div>
+      <div class="login-columns">
+        <article class="login-column"><h4>🎓 Admin Portal</h4><div class="credential"><span class="credential-label">Username / Email</span><span class="credential-value">admin@test.com</span><span class="credential-label">Password</span><span class="credential-value">admin123</span></div><div class="credential"><span class="credential-label">Username / Email</span><span class="credential-value">teacher5a@test.com</span><span class="credential-label">Password</span><span class="credential-value">teacher123</span></div><a href="http://localhost:5174">Open localhost:5174 →</a></article>
+        <article class="login-column"><h4>🚌 School Transport</h4><div class="credential"><span class="credential-label">Admin / Password</span><span class="credential-value">admin / admin123</span></div><div class="credential"><span class="credential-label">Drivers / Password</span><span class="credential-value">driver1 ... driver5 / driver123</span></div><div class="credential"><span class="credential-label">Parents / Password</span><span class="credential-value">parent1 ... parent10 / parent123</span></div><a href="http://localhost:5002">Open localhost:5002 →</a></article>
+        <article class="login-column"><h4>📄 Admissions</h4><div class="credential"><span class="credential-label">Username</span><span class="credential-value">admissions01</span><span class="credential-label">Password</span><span class="credential-value">test1234</span></div><a href="http://localhost:3001">Open localhost:3001 →</a></article>
+        <article class="login-column"><h4>🔔 Notifications</h4><div class="credential"><span class="credential-label">Admin</span><span class="credential-value">admin@example.com / admin123</span></div><div class="credential"><span class="credential-label">Teacher</span><span class="credential-value">rahul@example.com / teacher123</span></div><div class="credential"><span class="credential-label">Parent</span><span class="credential-value">priya@example.com / parent123</span></div><div class="credential"><span class="credential-label">Coordinators</span><span class="credential-value">primary.coordinator@example.com / primary123<br>secondary.coordinator@example.com / secondary123</span></div><a href="http://localhost:5001">Open localhost:5001 →</a></article>
+        <article class="login-column"><h4>💳 Fee Finance</h4><div class="credential"><span class="credential-label">Finance</span><span class="credential-value">finance@schoolconnect.edu / Finance@123</span></div><div class="credential"><span class="credential-label">SuperAdmin</span><span class="credential-value">superadmin@schoolconnect.edu / Admin@123</span></div><div class="credential"><span class="credential-label">Admin</span><span class="credential-value">admin@schoolconnect.edu / Admin@123</span></div><div class="credential"><span class="credential-label">Staff</span><span class="credential-value">staff@schoolconnect.edu / Staff@123</span></div><a href="http://localhost:5173">Open localhost:5173 →</a></article>
+        <article class="login-column"><h4>📚 Academics</h4><div class="credential"><span class="credential-label">Access</span><span class="credential-value">No login required</span></div><a href="http://localhost:4000">Open localhost:4000 →</a></article>
+      </div>
+      <p class="security-note">These are demo credentials for local development only. Change them before deployment.</p>
+    </section>
+  </main>
+</body>
+</html>
