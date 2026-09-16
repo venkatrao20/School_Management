@@ -11,6 +11,7 @@ import TopPerformerPage from "./pages/TopPerformerPage";
 import SyllabusPage from "./pages/SyllabusPage";
 import AcademicCalendarPage from "./pages/AcademicCalendarPage";
 import TeacherProfilePage from "./pages/TeacherProfilePage";
+import TransportPage from "./pages/TransportPage";
 import { seedIfEmpty as seedSchoolData } from "./services/schoolDataService";
 import { seedIfEmpty as seedSchoolInfo } from "./services/schoolInfoService";
 import { seedIfEmpty as seedAcademicCalendar } from "./services/academicCalendarService";
@@ -116,6 +117,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["TEACHER"]}>
                 <TeacherProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/transport"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "TEACHER"]}>
+                <TransportPage />
               </ProtectedRoute>
             }
           />
