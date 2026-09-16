@@ -22,7 +22,8 @@
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "helmet": "^8.0.0",
-    "mysql2": "^3.14.4"
+    "mysql2": "^3.14.4",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

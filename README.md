@@ -19,13 +19,16 @@ deployed as the final consolidated application.
 
 The first transport endpoints are now available from the root API:
 
+- `POST /api/auth/login`
 - `GET /api/transport/vehicles`
 - `GET /api/transport/routes`
 - `POST /api/transport/vehicles`
 - `POST /api/transport/routes`
 
-They require the tables in `school_transport/schema.mysql.sql` to be loaded
-into the shared MySQL database.
+Transport write endpoints require the bearer token returned by
+`/api/auth/login`. They require the tables in
+`school_transport/schema.mysql.sql` to be loaded into the shared MySQL
+database.
 
 This workspace combines five previously separate apps into one folder. Each
 app keeps its own runtime, its own login system, and its own port — they are

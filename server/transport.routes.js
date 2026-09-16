@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from './db.js';
+import { authenticate } from './auth.js';
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.get('/routes', async (_request, response) => {
   }
 });
 
-router.post('/routes', async (request, response) => {
+router.post('/routes', authenticate, async (request, response) => {
   const { routeId, routeName, stops, pickupTime, dropoffTime } = request.body || {};
   if (!requiredText(routeId) || !requiredText(routeName) || !Array.isArray(stops) || !requiredText(pickupTime) || !requiredText(dropoffTime)) {
     return invalidRequest(response, 'routeId, routeName, stops, pickupTime, and dropoffTime are required.');
@@ -67,7 +68,7 @@ router.post('/routes', async (request, response) => {
   }
 });
 
-router.post('/vehicles', async (request, response) => {
+router.post('/vehicles', authenticate, async (request, response) => {
   const { vehicleId, vehicleNumber, vehicleType, capacity, driverId = null, routeId = null } = request.body || {};
   if (!requiredText(vehicleId) || !requiredText(vehicleNumber) || !requiredText(vehicleType) || !positiveInteger(capacity)) {
     return invalidRequest(response, 'vehicleId, vehicleNumber, vehicleType, and a positive capacity are required.');
