@@ -17,6 +17,14 @@ data can be moved module by module without deleting working code. They are not
 yet part of the root API, and their SQLite/Flask/CRA runtimes must not be
 deployed as the final consolidated application.
 
+The first transport endpoints are now available from the root API:
+
+- `GET /api/transport/vehicles`
+- `GET /api/transport/routes`
+
+They require the tables in `school_transport/schema.mysql.sql` to be loaded
+into the shared MySQL database.
+
 This workspace combines five previously separate apps into one folder. Each
 app keeps its own runtime, its own login system, and its own port — they are
 **not** single-sign-on and don't share a database. Run each one in its own
