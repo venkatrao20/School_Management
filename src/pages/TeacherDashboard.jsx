@@ -71,6 +71,14 @@ function TeacherDashboard() {
             <h3>My Profile</h3>
             <p>View your staff profile and class allocation.</p>
           </div>
+          <div className="admin-nav-card" onClick={() => navigate("/notifications")}>
+            <h3>Notifications</h3>
+            <p>Review school announcements and unread activity.</p>
+          </div>
+          <div className="admin-nav-card" onClick={() => navigate("/transport")}>
+            <h3>Transport</h3>
+            <p>View the school fleet and route network.</p>
+          </div>
         </div>
       </div>
     </div>

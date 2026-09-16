@@ -15,6 +15,20 @@ npm run dev
 To initialize the migrated MySQL-owned tables manually, run `npm run db:migrate`.
 Railway runs this command automatically before starting the production API.
 
+If Railway does not inject linked-service variables automatically, add these
+references in the API service Variables screen:
+
+```text
+MYSQLHOST=${{MySQL.MYSQLHOST}}
+MYSQLPORT=${{MySQL.MYSQLPORT}}
+MYSQLUSER=${{MySQL.MYSQLUSER}}
+MYSQLPASSWORD=${{MySQL.MYSQLPASSWORD}}
+MYSQLDATABASE=${{MySQL.MYSQLDATABASE}}
+JWT_ACCESS_SECRET=<long-random-secret>
+```
+
+Alternatively set `DATABASE_URL` or `MYSQL_URL` to the MySQL connection URL.
+
 The remaining legacy folders are kept during migration so their features and
 data can be moved module by module without deleting working code. They are not
 yet part of the root API, and their SQLite/Flask/CRA runtimes must not be

@@ -19,8 +19,12 @@ async function migrate() {
       .map((statement) => statement.trim())
       .filter(Boolean);
 
-    for (const statement of statements) {
-      await pool.query(statement);
+    for (const [index, statement] of statements.entries()) {
+      try {
+        await pool.query(statement);
+      } catch (error) {
+        throw new Error(`${relativePath} statement ${index + 1} failed: ${error.message}`);
+      }
     }
     console.log(`Applied ${relativePath}`);
   }
