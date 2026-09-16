@@ -1,3 +1,10 @@
+# Migration status
+
+The notification service currently runs on Flask and SQLite. A MySQL schema
+contract is available in `schema.mysql.sql`, using `notification_`-prefixed
+tables so it can coexist with the shared users, students, admissions, and fee
+tables. The Flask handlers have not yet been switched to that schema.
+
 # School Notification Portal
 
 ## Local demo setup
