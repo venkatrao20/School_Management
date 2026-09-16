@@ -88,10 +88,20 @@ body {
 .module-table td small { margin-top: 4px; color: var(--muted); font: 11px var(--font-mono); }
 .module-badge { display: inline-block; padding: 5px 8px; color: var(--teal); background: rgba(47, 111, 94, .1); border-radius: 999px; font-size: 11px; }
 .module-empty { color: var(--muted); }
+.notification-list { max-width: 1180px; margin: 0 auto; }
+.notification-item { display: flex; justify-content: space-between; gap: 24px; padding: 18px 0; border-top: 1px solid var(--paper-dim); }
+.notification-item.is-read { opacity: .65; }
+.notification-item h3 { margin: 10px 0 5px; font-size: 16px; }
+.notification-item p { margin: 0; color: var(--muted); line-height: 1.5; }
+.notification-meta { display: flex; align-items: center; gap: 10px; }
+.notification-meta time { color: var(--muted); font-size: 12px; }
+.notification-action { align-self: center; flex: 0 0 auto; padding: 9px 12px; color: var(--paper); background: var(--teal); border: 0; border-radius: var(--radius); cursor: pointer; }
 
 @media (max-width: 760px) {
   .module-header, .module-grid { grid-template-columns: 1fr; }
   .module-stat { border-left: 0; border-top: 1px solid var(--paper-dim); padding: 14px 0 0; }
+  .notification-item { flex-direction: column; gap: 14px; }
+  .notification-action { align-self: flex-start; }
 }
 
 /* ---------------------------------------------

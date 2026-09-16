@@ -12,6 +12,7 @@ import SyllabusPage from "./pages/SyllabusPage";
 import AcademicCalendarPage from "./pages/AcademicCalendarPage";
 import TeacherProfilePage from "./pages/TeacherProfilePage";
 import TransportPage from "./pages/TransportPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import { seedIfEmpty as seedSchoolData } from "./services/schoolDataService";
 import { seedIfEmpty as seedSchoolInfo } from "./services/schoolInfoService";
 import { seedIfEmpty as seedAcademicCalendar } from "./services/academicCalendarService";
@@ -126,6 +127,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["ADMIN", "TEACHER"]}>
                 <TransportPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "TEACHER"]}>
+                <NotificationsPage />
               </ProtectedRoute>
             }
           />
