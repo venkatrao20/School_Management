@@ -12,6 +12,26 @@ const schemaFiles = [
   'school_transport/schema.mysql.sql',
 ];
 
+async function ensureConsolidatedModuleTables() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS admission_enquiries (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    enquiry_ref VARCHAR(40) NOT NULL UNIQUE,
+    student_name VARCHAR(150) NOT NULL,
+    class_applied_for VARCHAR(50) NOT NULL,
+    parent_name VARCHAR(150) NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS finance_fee_payments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    receipt_no VARCHAR(50) NOT NULL UNIQUE,
+    student_name VARCHAR(150) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    payment_status VARCHAR(30) NOT NULL,
+    paid_on DATE NOT NULL
+  )`);
+}
+
 async function seedApplicationUsers() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -69,24 +89,6 @@ async function seedApplicationUsers() {
 
 async function seedModuleData() {
   // Representative records based on the supplied admissions and finance module seed data.
-  await pool.query(`CREATE TABLE IF NOT EXISTS admission_enquiries (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    enquiry_ref VARCHAR(40) NOT NULL UNIQUE,
-    student_name VARCHAR(150) NOT NULL,
-    class_applied_for VARCHAR(50) NOT NULL,
-    parent_name VARCHAR(150) NOT NULL,
-    status VARCHAR(30) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )`);
-  await pool.query(`CREATE TABLE IF NOT EXISTS finance_fee_payments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    receipt_no VARCHAR(50) NOT NULL UNIQUE,
-    student_name VARCHAR(150) NOT NULL,
-    amount DECIMAL(12,2) NOT NULL,
-    payment_status VARCHAR(30) NOT NULL,
-    paid_on DATE NOT NULL
-  )`);
-
   await pool.query(`INSERT INTO academic_classes (name, section)
     SELECT 'Grade 5', 'A' WHERE NOT EXISTS (SELECT 1 FROM academic_classes WHERE name = 'Grade 5' AND section = 'A')`);
   await pool.query(`INSERT IGNORE INTO academic_subjects (name, code) VALUES ('Mathematics', 'MATH-5'), ('Science', 'SCI-5')`);
@@ -214,6 +216,7 @@ async function migrate() {
     }
     console.log(`Applied ${relativePath}`);
   }
+  await ensureConsolidatedModuleTables();
   await seedApplicationUsers();
   if (process.env.SEED_DEMO_DATA === 'true') {
     await seedModuleData();

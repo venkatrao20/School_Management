@@ -64,11 +64,20 @@ The first transport endpoints are now available from the root API:
 - `PATCH/DELETE /api/transport/vehicles/:id`
 - `PATCH/DELETE /api/transport/routes/:id`
 - `POST /api/transport/movements`
+- `GET/POST /api/admissions/enquiries`
+- `GET /api/admissions/summary`
+- `GET/POST /api/finance/payments`
+- `GET /api/finance/summary`
 
 Transport write endpoints require the bearer token returned by
 `/api/auth/login`. They require the tables in
 `school_transport/schema.mysql.sql` to be loaded into the shared MySQL
 database.
+
+Admissions endpoints require an `ADMIN` or `ADMISSIONS` account. Finance
+endpoints require an `ADMIN` or `FINANCE` account. The root migration creates
+the shared enquiry and payment tables automatically; existing live records are
+never replaced. Demo records are inserted only when `SEED_DEMO_DATA=true`.
 
 This workspace combines five previously separate apps into one folder. Each
 app keeps its own runtime, its own login system, and its own port — they are

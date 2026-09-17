@@ -8,6 +8,7 @@ import { pool } from './db.js';
 import authRoutes from './auth.js';
 import notificationRoutes from './notifications.routes.js';
 import transportRoutes from './transport.routes.js';
+import moduleRoutes from './modules.routes.js';
 
 const app = express();
 const port = Number(process.env.PORT || 5000);
@@ -55,6 +56,7 @@ app.get('/api', (_request, response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/transport', transportRoutes);
+app.use('/api', moduleRoutes);
 app.use('/api', (_request, response) => {
   response.status(404).json({ success: false, error: 'API route not found.' });
 });
