@@ -12,10 +12,32 @@ import transportRoutes from './transport.routes.js';
 const app = express();
 const port = Number(process.env.PORT || 5000);
 const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
+const allowedOrigins = new Set(
+  [
+    'http://localhost:3000',
+    process.env.FRONTEND_URL,
+  ]
+    .filter(Boolean)
+    .flatMap((origins) => origins.split(',').map((origin) => origin.trim()).filter(Boolean))
+);
 
-app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || true }));
-app.use(express.json());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
+    },
+  },
+}));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(new Error('Origin is not allowed.'));
+  },
+}));
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', async (_request, response) => {
   try {
@@ -33,10 +55,25 @@ app.get('/api', (_request, response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/transport', transportRoutes);
+app.use('/api', (_request, response) => {
+  response.status(404).json({ success: false, error: 'API route not found.' });
+});
 
-app.use(express.static(path.join(rootDirectory, '../dist')));
+app.use(express.static(path.join(rootDirectory, '../dist'), {
+  maxAge: '1h',
+  setHeaders(response, filePath) {
+    if (filePath.endsWith('index.html')) {
+      response.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
 app.get(/^(?!\/api).*/, (_request, response) => {
   response.sendFile(path.join(rootDirectory, '../dist/index.html'));
+});
+
+app.use((error, _request, response, _next) => {
+  console.error(error);
+  response.status(500).json({ success: false, error: 'Unexpected server error.' });
 });
 
 app.listen(port, () => {

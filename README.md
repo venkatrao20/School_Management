@@ -41,6 +41,11 @@ For a production deployment, set `BOOTSTRAP_ADMIN_EMAIL` and
 administrator only if the email does not already exist. Do not set
 `SEED_DEMO_DATA=true` in Railway: it is strictly for local demonstration data.
 
+The service hosts both the Vite frontend and API from one Railway deployment.
+If you later host the frontend separately, set `FRONTEND_URL` to its HTTPS
+origin (or a comma-separated list of trusted origins); untrusted browser
+origins are rejected by the API.
+
 The remaining legacy folders are kept during migration so their features and
 data can be moved module by module without deleting working code. They are not
 yet part of the root API, and their SQLite/Flask/CRA runtimes must not be
