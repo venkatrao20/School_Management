@@ -2,12 +2,11 @@ import axios from "axios";
 import { MOCK_USERS } from "../data/mockAccounts";
 import { getEffectivePassword } from "./userAccountService";
 
-// Point this to your real backend
-const API_BASE_URL = "http://localhost:5000/api/auth";
+const API_BASE_URL = "/api/auth";
 
 // Set to true to log in without a real backend (for UI testing only).
 // Set to false once your backend is ready.
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -75,9 +74,9 @@ const mockClassKeyLogin = (classKey) => {
 export const login = async (username, password) => {
   const response = MOCK_MODE
     ? await mockLogin(username, password)
-    : await api.post("/login", { username, password });
+    : await api.post("/login", { email: username, password });
 
-  const { token, user } = response.data;
+  const { accessToken: token, user } = response.data;
 
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));

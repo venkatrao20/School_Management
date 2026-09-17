@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool } from './db.js';
-import { authenticate } from './auth.js';
+import { authenticate, requireRoles } from './auth.js';
 
 const router = Router();
 
@@ -21,7 +21,7 @@ function invalidRequest(response, message) {
   return response.status(400).json({ success: false, error: message });
 }
 
-router.get('/vehicles', async (_request, response) => {
+router.get('/vehicles', authenticate, requireRoles('ADMIN', 'TEACHER', 'TRANSPORT'), async (_request, response) => {
   try {
     const [rows] = await pool.query(`
       SELECT v.*, d.name AS driver_name, r.route_name
@@ -39,7 +39,7 @@ router.get('/vehicles', async (_request, response) => {
   }
 });
 
-router.get('/routes', async (_request, response) => {
+router.get('/routes', authenticate, requireRoles('ADMIN', 'TEACHER', 'TRANSPORT'), async (_request, response) => {
   try {
     const [rows] = await pool.query(`
       SELECT id, route_id, route_name, stops, pickup_time, dropoff_time
@@ -55,7 +55,7 @@ router.get('/routes', async (_request, response) => {
   }
 });
 
-router.post('/routes', authenticate, async (request, response) => {
+router.post('/routes', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const { routeId, routeName, stops, pickupTime, dropoffTime } = request.body || {};
   if (!requiredText(routeId) || !requiredText(routeName) || !Array.isArray(stops) || !requiredText(pickupTime) || !requiredText(dropoffTime)) {
     return invalidRequest(response, 'routeId, routeName, stops, pickupTime, and dropoffTime are required.');
@@ -73,7 +73,7 @@ router.post('/routes', authenticate, async (request, response) => {
   }
 });
 
-router.post('/vehicles', authenticate, async (request, response) => {
+router.post('/vehicles', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const { vehicleId, vehicleNumber, vehicleType, capacity, driverId = null, routeId = null } = request.body || {};
   if (!requiredText(vehicleId) || !requiredText(vehicleNumber) || !requiredText(vehicleType) || !positiveInteger(capacity)) {
     return invalidRequest(response, 'vehicleId, vehicleNumber, vehicleType, and a positive capacity are required.');
@@ -93,7 +93,7 @@ router.post('/vehicles', authenticate, async (request, response) => {
   }
 });
 
-router.patch('/routes/:id', authenticate, async (request, response) => {
+router.patch('/routes/:id', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const id = pathId(request.params.id);
   const { routeId, routeName, stops, pickupTime, dropoffTime } = request.body || {};
   if (!id) return invalidRequest(response, 'route id must be a positive integer.');
@@ -115,7 +115,7 @@ router.patch('/routes/:id', authenticate, async (request, response) => {
   }
 });
 
-router.patch('/vehicles/:id', authenticate, async (request, response) => {
+router.patch('/vehicles/:id', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const id = pathId(request.params.id);
   const { vehicleId, vehicleNumber, vehicleType, capacity, driverId = null, routeId = null, status = 'active' } = request.body || {};
   if (!id) return invalidRequest(response, 'vehicle id must be a positive integer.');
@@ -139,7 +139,7 @@ router.patch('/vehicles/:id', authenticate, async (request, response) => {
   }
 });
 
-router.delete('/routes/:id', authenticate, async (request, response) => {
+router.delete('/routes/:id', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const id = pathId(request.params.id);
   if (!id) return invalidRequest(response, 'route id must be a positive integer.');
   try {
@@ -151,7 +151,7 @@ router.delete('/routes/:id', authenticate, async (request, response) => {
   }
 });
 
-router.delete('/vehicles/:id', authenticate, async (request, response) => {
+router.delete('/vehicles/:id', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const id = pathId(request.params.id);
   if (!id) return invalidRequest(response, 'vehicle id must be a positive integer.');
   try {
@@ -163,7 +163,7 @@ router.delete('/vehicles/:id', authenticate, async (request, response) => {
   }
 });
 
-router.post('/movements', authenticate, async (request, response) => {
+router.post('/movements', authenticate, requireRoles('ADMIN', 'TRANSPORT'), async (request, response) => {
   const { studentId, movementType, movementDate = null, movementTime = null, vehicleId = null, routeId = null, notes = null } = request.body || {};
   if (!requiredText(studentId) || !['boarding', 'drop_off', 'school_entry', 'school_exit'].includes(movementType)) {
     return invalidRequest(response, 'studentId and a valid movementType are required.');

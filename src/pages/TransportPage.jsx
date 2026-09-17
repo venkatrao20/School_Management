@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { getToken } from "../services/authService";
 
 async function loadResource(path) {
-  const response = await fetch(path);
+  const response = await fetch(path, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "Transport data is unavailable.");
   return body.data;

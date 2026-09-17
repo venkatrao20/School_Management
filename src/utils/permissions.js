@@ -14,7 +14,16 @@ export function isTeacher(user) {
   return user?.role === "TEACHER";
 }
 
+export function isAdmin(user) {
+  return user?.role === "ADMIN";
+}
+
 export function getAssignedClasses(user) {
+  if (isAdmin(user)) {
+    const uploaded = getRecords("student");
+    const students = uploaded.length > 0 ? uploaded : SAMPLE_DATA.student;
+    return [...new Set(students.map((student) => `${student.class}-${student.section}`))].sort();
+  }
   if (!isTeacher(user)) return [];
   const assignment = getAssignmentFor(user.staffId);
   return assignment ? assignment.classes : [];
@@ -28,6 +37,7 @@ export function canAccessClass(user, classSection) {
 // class-section — the one person who should see rankings across every
 // subject for that class, not just their own subject.
 export function isClassTeacherOf(user, classSection) {
+  if (isAdmin(user)) return canAccessClass(user, classSection);
   if (!isTeacher(user)) return false;
   const assignment = getAssignmentFor(user.staffId);
   return !!assignment && assignment.isClassTeacherOf === classSection;
@@ -42,4 +52,3 @@ export function getStudentsForClass(user, classSection) {
   const pool = uploaded.length > 0 ? uploaded : SAMPLE_DATA.student;
   return pool.filter((s) => s.class === cls && s.section === section);
 }
-

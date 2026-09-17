@@ -25,6 +25,8 @@ MYSQLUSER=${{MySQL.MYSQLUSER}}
 MYSQLPASSWORD=${{MySQL.MYSQLPASSWORD}}
 MYSQLDATABASE=${{MySQL.MYSQLDATABASE}}
 JWT_ACCESS_SECRET=<long-random-secret>
+BOOTSTRAP_ADMIN_EMAIL=<initial-admin-email>
+BOOTSTRAP_ADMIN_PASSWORD=<initial-admin-password-of-at-least-12-characters>
 ```
 
 Alternatively set `DATABASE_URL` or `MYSQL_URL` to the MySQL connection URL.
@@ -33,6 +35,11 @@ The API service must have a Railway MySQL service linked to it. Creating a
 database service separately is not enough: open the API service Variables tab
 and add the `${{MySQL.*}}` references above, replacing `MySQL` with the exact
 name of your Railway database service. Then redeploy the API service.
+
+For a production deployment, set `BOOTSTRAP_ADMIN_EMAIL` and
+`BOOTSTRAP_ADMIN_PASSWORD` in Railway Variables. The migration creates that
+administrator only if the email does not already exist. Do not set
+`SEED_DEMO_DATA=true` in Railway: it is strictly for local demonstration data.
 
 The remaining legacy folders are kept during migration so their features and
 data can be moved module by module without deleting working code. They are not

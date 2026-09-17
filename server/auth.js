@@ -4,7 +4,20 @@ import { Router } from 'express';
 import { pool } from './db.js';
 
 const router = Router();
-const secret = process.env.JWT_ACCESS_SECRET || 'local-development-only-secret';
+const secret = process.env.JWT_ACCESS_SECRET;
+
+if (!secret || secret.length < 32) {
+  throw new Error('JWT_ACCESS_SECRET must be set to a random value of at least 32 characters.');
+}
+
+export function requireRoles(...roles) {
+  return (request, response, next) => {
+    if (!roles.includes(request.user?.role)) {
+      return response.status(403).json({ success: false, error: 'You do not have permission to access this resource.' });
+    }
+    next();
+  };
+}
 
 router.post('/login', async (request, response) => {
   const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';

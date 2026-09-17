@@ -22,4 +22,7 @@ const TEACHER_MOCK_USERS = SEED_DATA.staff
     classTeacherOf: s.classTeacherOf,
   }));
 
-export const MOCK_USERS = [...TEACHER_MOCK_USERS];
+export const MOCK_USERS = [
+  { username: "admin@test.com", defaultPassword: "admin123", id: 1, name: "Admin User", role: "ADMIN" },
+  ...TEACHER_MOCK_USERS,
+];

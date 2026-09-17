@@ -23,11 +23,16 @@ function Login() {
   const navigate = useNavigate();
 
   const goToDashboard = (user) => {
-    if (user.role === "TEACHER") {
-      navigate("/teacher-dashboard");
-    } else {
-      navigate("/unauthorized");
-    }
+    const destinationByRole = {
+      ADMIN: "/admin-dashboard",
+      TEACHER: "/teacher-dashboard",
+      ADMISSIONS: "/module-dashboard",
+      TRANSPORT: "/module-dashboard",
+      FINANCE: "/module-dashboard",
+      PARENT: "/module-dashboard",
+      STUDENT: "/module-dashboard",
+    };
+    navigate(destinationByRole[user.role] || "/home-dashboard", { replace: true });
   };
 
   const handleChange = (e) => {
@@ -54,7 +59,7 @@ function Login() {
       const user = await login(formData.username, formData.password);
       goToDashboard(user);
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid username or password.");
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || "Invalid username or password.");
     } finally {
       setLoading(false);
     }
@@ -96,27 +101,18 @@ function Login() {
         {/* Branding panel */}
         <div className="portal-brand">
           <div className="portal-brand-top">
-            <div className="seal" aria-hidden="true">
-              <svg viewBox="0 0 100 100" className="seal-svg">
-                <circle cx="50" cy="50" r="47" className="seal-ring-outer" />
-                <circle cx="50" cy="50" r="38" className="seal-ring-inner" />
-                <text x="50" y="58" textAnchor="middle" className="seal-mark">
-                  AP
-                </text>
-              </svg>
-            </div>
-            <span className="portal-eyebrow">Teacher Portal</span>
+            <img className="portal-logo" src="/brand/edunovae-logo.jpeg" alt="EDUNOVAE" />
+            <span className="portal-eyebrow">EDUNOVAE</span>
           </div>
 
           <div className="portal-brand-body">
             <h1 className="portal-title">
               Enter the
               <br />
-              Teacher Portal
+              School Portal
             </h1>
             <p className="portal-tagline">
-              One credential, every activity assigned to you &mdash; nothing more,
-              nothing less.
+              Access administration, academics, transport, and communication modules from one place.
             </p>
           </div>
 
@@ -141,7 +137,7 @@ function Login() {
               <>
                 <span className="form-kicker">Sign in</span>
                 <h2 className="form-heading">Welcome back</h2>
-                <p className="form-subheading">Use your assigned credentials to continue.</p>
+                <p className="form-subheading">Use your school credentials to continue.</p>
 
                 <form onSubmit={handleLogin} noValidate>
                   <div className="field-group">
@@ -199,20 +195,16 @@ function Login() {
                 </form>
 
                 <p className="form-footnote">
-                  Forgot your password? Teachers can{" "}
-                  <button type="button" className="ghost-toggle" onClick={switchToClassKey}>
-                    sign in with your class key
-                  </button>{" "}
-                  instead.
+                  Need help accessing your account? Contact the school administrator.
                 </p>
               </>
             ) : (
               <>
-                <span className="form-kicker">Teacher access</span>
+                <span className="form-kicker">Quick access</span>
                 <h2 className="form-heading">Sign in with your class key</h2>
                 <p className="form-subheading">
-                  Every class-section has its own key so you can get back in without waiting on
-                  an Admin. Select your class and section below.
+                  Teachers can use their class-section key to access the school system quickly.
+                  Select your class and section below.
                 </p>
 
                 <form onSubmit={handleClassKeyLogin} noValidate>
