@@ -68,6 +68,8 @@ The first transport endpoints are now available from the root API:
 - `GET /api/admissions/summary`
 - `GET/POST /api/finance/payments`
 - `GET /api/finance/summary`
+- `GET/POST /api/academics/calendar`
+- `GET /api/academics/summary`
 
 Transport write endpoints require the bearer token returned by
 `/api/auth/login`. They require the tables in
@@ -78,6 +80,10 @@ Admissions endpoints require an `ADMIN` or `ADMISSIONS` account. Finance
 endpoints require an `ADMIN` or `FINANCE` account. The root migration creates
 the shared enquiry and payment tables automatically; existing live records are
 never replaced. Demo records are inserted only when `SEED_DEMO_DATA=true`.
+
+Academic calendar records are read from the shared MySQL database by the
+teacher calendar screen. `ADMIN` can create calendar records through the API;
+`ADMIN` and `TEACHER` can read the academic summaries and calendar.
 
 This workspace combines five previously separate apps into one folder. Each
 app keeps its own runtime, its own login system, and its own port — they are

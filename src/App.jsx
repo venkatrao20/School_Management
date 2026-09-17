@@ -18,14 +18,12 @@ import NotificationsPage from "./pages/NotificationsPage";
 import ModuleDashboard from "./pages/ModuleDashboard";
 import { seedIfEmpty as seedSchoolData } from "./services/schoolDataService";
 import { seedIfEmpty as seedSchoolInfo } from "./services/schoolInfoService";
-import { seedIfEmpty as seedAcademicCalendar } from "./services/academicCalendarService";
 
 // Pre-populate the demo (staff/student seed data, school profile, academic
 // calendar) the first time the app loads — same convention as the full
 // admin portal's App.jsx.
 seedSchoolData();
 seedSchoolInfo();
-seedAcademicCalendar();
 
 // Teachers & Academics module (standalone) — covers every feature listed
 // under the "Teachers & Academics" epic in the MVP1 master feature sheet:

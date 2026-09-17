@@ -15,6 +15,71 @@ function asAmount(value) {
 
 router.use(authenticate);
 
+router.get('/academics/summary', requireRoles('ADMIN', 'TEACHER'), async (_request, response) => {
+  try {
+    const [[classCount], [studentCount], [teacherCount], [homeworkCount]] = await Promise.all([
+      pool.query('SELECT COUNT(*) AS total FROM academic_classes'),
+      pool.query('SELECT COUNT(*) AS total FROM academic_students'),
+      pool.query("SELECT COUNT(*) AS total FROM academic_teachers WHERE status = 'Active' OR status IS NULL"),
+      pool.query('SELECT COUNT(*) AS total FROM academic_homework WHERE assigned_date >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)'),
+    ]);
+    response.json({
+      success: true,
+      data: {
+        classes: Number(classCount.total || 0),
+        students: Number(studentCount.total || 0),
+        teachers: Number(teacherCount.total || 0),
+        homeworkThisWeek: Number(homeworkCount.total || 0),
+      },
+    });
+  } catch (error) {
+    response.status(503).json({ success: false, error: 'Academic data is unavailable until the MySQL schema is initialized.' });
+  }
+});
+
+router.get('/academics/calendar', requireRoles('ADMIN', 'TEACHER'), async (_request, response) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT id, title, event_type, start_date, end_date, description
+      FROM academic_calendar
+      ORDER BY start_date ASC, id ASC
+    `);
+    response.json({
+      success: true,
+      data: rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        type: row.event_type || 'Event',
+        date: String(row.start_date).slice(0, 10),
+        endDate: row.end_date ? String(row.end_date).slice(0, 10) : null,
+        description: row.description || '',
+      })),
+    });
+  } catch (error) {
+    response.status(503).json({ success: false, error: 'Academic calendar is unavailable until the MySQL schema is initialized.' });
+  }
+});
+
+router.post('/academics/calendar', requireRoles('ADMIN'), async (request, response) => {
+  const { title, type = 'Event', date, endDate = null, description = '' } = request.body || {};
+  if (!requiredText(title) || !requiredText(date)) {
+    return response.status(400).json({ success: false, error: 'title and date are required.' });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || (endDate && !/^\d{4}-\d{2}-\d{2}$/.test(endDate))) {
+    return response.status(400).json({ success: false, error: 'date and endDate must use YYYY-MM-DD.' });
+  }
+  try {
+    const [result] = await pool.execute(
+      `INSERT INTO academic_calendar (title, event_type, start_date, end_date, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      [title.trim(), type.trim() || 'Event', date, endDate || date, typeof description === 'string' ? description.trim() : '']
+    );
+    response.status(201).json({ success: true, data: { id: result.insertId } });
+  } catch (error) {
+    response.status(503).json({ success: false, error: 'Academic calendar is unavailable until the MySQL schema is initialized.' });
+  }
+});
+
 router.get('/admissions/summary', requireRoles('ADMIN', 'ADMISSIONS'), async (_request, response) => {
   try {
     const [rows] = await pool.query(`

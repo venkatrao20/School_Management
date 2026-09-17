@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getEventsForMonth, getUpcomingEvents } from "../services/academicCalendarService";
+import { getToken } from "../services/authService";
 import { CALENDAR_EVENT_TYPES } from "../data/academicCalendarSchema";
 
 function todayISO() {
@@ -37,12 +37,31 @@ function AcademicCalendarPage() {
   const navigate = useNavigate();
   const [yearMonth, setYearMonth] = useState(currentYearMonth());
   const [typeFilter, setTypeFilter] = useState("all");
+  const [events, setEvents] = useState([]);
+  const [loadError, setLoadError] = useState("");
   const today = todayISO();
 
-  const monthEvents = getEventsForMonth(yearMonth).filter(
-    (e) => typeFilter === "all" || e.type === typeFilter
-  );
-  const upcoming = getUpcomingEvents(today, 5);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/academics/calendar", { headers: { Authorization: `Bearer ${getToken()}` } })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Academic calendar is unavailable.");
+        return body.data;
+      })
+      .then((data) => { if (active) setEvents(data); })
+      .catch((error) => { if (active) setLoadError(error.message); });
+    return () => { active = false; };
+  }, []);
+
+  const monthEvents = events.filter((e) => {
+    const start = e.date.slice(0, 7);
+    const end = (e.endDate || e.date).slice(0, 7);
+    return yearMonth >= start && yearMonth <= end && (typeFilter === "all" || e.type === typeFilter);
+  });
+  const upcoming = events
+    .filter((e) => (e.endDate || e.date) >= today)
+    .slice(0, 5);
 
   return (
     <div className="dashboard-container">
@@ -58,6 +77,7 @@ function AcademicCalendarPage() {
           School-wide holidays, exams, PTMs and events. Set up by Administration —
           view only here.
         </p>
+        {loadError && <p className="module-alert">{loadError}</p>}
 
         <div className="results-panel" style={{ marginBottom: 20 }}>
           <h3 style={{ fontFamily: "var(--font-display)", marginTop: 0 }}>Coming Up</h3>
